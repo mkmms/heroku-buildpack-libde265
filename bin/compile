@@ -33,7 +33,7 @@ if [ ! -f $CACHE_FILE ]; then
   echo "-----> Building libde265"
   cd $LIBDE265_DIR
   ./autogen.sh
-  ./configure
+  ./configure --prefix=$INSTALL_DIR
   make && make install
   cd ..
   rm -rf $LIBDE265_DIR
