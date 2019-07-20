@@ -1,0 +1,57 @@
+#!/bin/bash
+
+indent() {
+  sed -u 's/^/       /'
+}
+
+echo "-----> Install libde265"
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+VENDOR_DIR="$BUILD_DIR/vendor"
+INSTALL_DIR="$VENDOR_DIR/libde265"
+LIBDE265_VERSION="${LIBDE265_VERSION:-1.0.3}"
+CACHE_FILE="$CACHE_DIR/libde265-$LIBDE265_VERSION.tar.gz"
+
+if [ ! -f $CACHE_FILE ]; then
+  # install libde265
+  LIBDE265_FILE="libde265-$LIBDE265_VERSION.tar.gz"
+  LIBDE265_DIR="libde265-$LIBDE265_VERSION"
+  LIBDE265_URL="https://github.com/strukturag/libde265/releases/download/v$LIBDE265_VERSION/$LIBDE265_FILE"
+
+  echo "-----> Downloading libde265 from $LIBDE265_URL"
+  wget $LIBDE265_URL -P $BUILD_DIR | indent
+
+  echo "-----> Extracting libde265 from $BUILD_DIR/$LIBDE265_FILE"
+  if [ ! -f $BUILD_DIR/$LIBDE265_FILE ]; then
+    echo "Error: Unable to download libde265" | indent
+    ls $BUILD_DIR | indent
+    exit 1;
+  fi
+  tar zxf $BUILD_DIR/$LIBDE265_FILE | indent
+
+  echo "-----> Building libde265"
+  cd $LIBDE265_DIR
+  ./configure
+  make && make install
+  cd ..
+  rm -rf $LIBDE265_DIR
+
+  # cache for future deploys
+  echo "-----> Caching libde265 installation"
+  cd $VENDOR_DIR
+  REL_INSTALL_DIR="libde265"
+  tar czf $REL_INSTALL_DIR.tar.gz $REL_INSTALL_DIR
+
+  if [ ! -d $CACHE_DIR ]; then
+    mkdir -p $CACHE_DIR
+  fi
+
+  mv $REL_INSTALL_DIR.tar.gz $CACHE_FILE
+
+else
+  # cache exists, extract it
+  echo "-----> Extracting libde265 $CACHE_FILE => $VENDOR_DIR"
+  mkdir -p $VENDOR_DIR
+  tar xzf $CACHE_FILE -C $VENDOR_DIR
+fi
